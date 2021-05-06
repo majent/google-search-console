@@ -13,11 +13,11 @@ class SearchConsoleApiClient:
         self.service_account_key = json.load(open('service-account-key.json'))
         self.api_client = self._build_google_api_client()
 
-    def query_search_analytics(self, date: datetime, dimensions: List[str]) -> pd.DataFrame:
+    def query_search_analytics(self, date_from: datetime, date_to: datetime, dimensions: List[str]) -> pd.DataFrame:
         i = 0
         result = None
         while True:
-            df = self._query(date, dimensions, i)
+            df = self._query(date_from, date_to, dimensions, i)
             i += 1
             if df is None:
                 break
@@ -33,10 +33,10 @@ class SearchConsoleApiClient:
         )
         return build('webmasters', 'v3', credentials=credentials)
 
-    def _query(self, date: datetime, dimensions: List[str], i: int) -> pd.DataFrame:
+    def _query(self, date_from: datetime, date_to: datetime, dimensions: List[str], i: int) -> pd.DataFrame:
         max_rows = 25000
-        start_date = date.strftime('%Y-%m-%d')
-        end_date = date.strftime('%Y-%m-%d')
+        start_date = date_from.strftime('%Y-%m-%d')
+        end_date = date_to.strftime('%Y-%m-%d')
 
         body = {
             'startDate': start_date,
@@ -45,6 +45,7 @@ class SearchConsoleApiClient:
             'rowLimit': max_rows,
             'startRow': i * max_rows
         }
+        print(f'row = {i * max_rows}')
 
         response = self.api_client.searchanalytics().query(siteUrl=self.url, body=body).execute()
         if 'rows' not in response:
